@@ -49,6 +49,7 @@ namespace LR1
                 Text = "Добавить",
                 Width = 100
             };
+            addOrderButton.Click += AddOrderButton_Click;
 
             removeOrderButton = new Button
             {
@@ -56,6 +57,7 @@ namespace LR1
                 Text = "Удалить",
                 Width = 100
             };
+            removeOrderButton.Click += RemoveOrderButton_Click;
 
             updateStatusButton = new Button
             {
@@ -63,6 +65,7 @@ namespace LR1
                 Text = "Обновить статус",
                 Width = 130
             };
+            updateStatusButton.Click += UpdateStatusButton_Click;
 
             statusComboBox = new ComboBox
             {
@@ -96,6 +99,95 @@ namespace LR1
             Controls.Add(ordersListBox);
 
             orderManager = new OrderManager();
+            UpdateOrdersList();
         }
+
+        private void UpdateOrdersList()
+        {
+            ordersListBox.Items.Clear();
+
+            foreach (var order in orderManager.Orders)
+            {
+                ordersListBox.Items.Add(
+                    $"{order.CustomerName} - {order.Description} ({order.Status}) [{order.CreationDate:dd.MM.yyyy}]");
+            }
+        }
+
+        private void AddOrderButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(customerNameTextBox.Text) ||
+                string.IsNullOrWhiteSpace(descriptionTextBox.Text))
+            {
+                MessageBox.Show("Заполните все поля!");
+                return;
+            }
+
+            DateTime creationDate = creationDatePicker.Value;
+            Order newOrder = new Order(
+                customerNameTextBox.Text.Trim(),
+                descriptionTextBox.Text.Trim(),
+                creationDate
+            );
+            try
+            {
+                orderManager.AddOrder(newOrder);
+                customerNameTextBox.Clear();
+                descriptionTextBox.Clear();
+                UpdateOrdersList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void RemoveOrderButton_Click(object sender, EventArgs e)
+{
+    if (ordersListBox.SelectedIndex == -1)
+    {
+        MessageBox.Show("Выберите заказ для удаления!");
+        return;
+    }
+
+    var orderToRemove = orderManager.Orders[ordersListBox.SelectedIndex];
+
+    try
+    {
+        orderManager.RemoveOrder(orderToRemove);
+        UpdateOrdersList();
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show(ex.Message);
+    }
+}
+
+private void UpdateStatusButton_Click(object sender, EventArgs e)
+{
+    if (ordersListBox.SelectedIndex == -1)
+    {
+        MessageBox.Show("Выберите заказ для обновления статуса!");
+        return;
+    }
+
+    if (statusComboBox.SelectedItem == null)
+    {
+        MessageBox.Show("Выберите новый статус!");
+        return;
+    }
+
+    var orderToUpdate = orderManager.Orders[ordersListBox.SelectedIndex];
+    OrderStatus newStatus = (OrderStatus)statusComboBox.SelectedItem;
+
+    try
+    {
+        orderManager.UpdateOrderStatus(orderToUpdate, newStatus);
+        UpdateOrdersList();
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show(ex.Message);
+    }
+}
     }
 }
