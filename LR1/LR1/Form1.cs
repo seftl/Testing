@@ -5,16 +5,16 @@ namespace LR1
 {
     public partial class Form1 : Form
     {
-        private OrderManager orderManager;
+        internal OrderManager orderManager;
 
-        private TextBox customerNameTextBox;
-        private TextBox descriptionTextBox;
-        private DateTimePicker creationDatePicker;
-        private ComboBox statusComboBox;
-        private Button addOrderButton;
-        private Button removeOrderButton;
-        private Button updateStatusButton;
-        private ListBox ordersListBox;
+        internal TextBox customerNameTextBox;
+        internal TextBox descriptionTextBox;
+        internal DateTimePicker creationDatePicker;
+        internal ComboBox statusComboBox;
+        internal Button addOrderButton;
+        internal Button removeOrderButton;
+        internal Button updateStatusButton;
+        internal ListBox ordersListBox;
 
         public Form1()
         {
@@ -49,7 +49,6 @@ namespace LR1
                 Text = "Добавить",
                 Width = 100
             };
-            addOrderButton.Click += AddOrderButton_Click;
 
             removeOrderButton = new Button
             {
@@ -57,7 +56,6 @@ namespace LR1
                 Text = "Удалить",
                 Width = 100
             };
-            removeOrderButton.Click += RemoveOrderButton_Click;
 
             updateStatusButton = new Button
             {
@@ -65,7 +63,6 @@ namespace LR1
                 Text = "Обновить статус",
                 Width = 130
             };
-            updateStatusButton.Click += UpdateStatusButton_Click;
 
             statusComboBox = new ComboBox
             {
@@ -99,95 +96,66 @@ namespace LR1
             Controls.Add(ordersListBox);
 
             orderManager = new OrderManager();
-            UpdateOrdersList();
-        }
 
-        private void UpdateOrdersList()
-        {
-            ordersListBox.Items.Clear();
+            addOrderButton.Click += AddOrderButton_Click;
+            removeOrderButton.Click += RemoveOrderButton_Click;
+            updateStatusButton.Click += UpdateStatusButton_Click;
 
-            foreach (var order in orderManager.Orders)
-            {
-                ordersListBox.Items.Add(
-                    $"{order.CustomerName} - {order.Description} ({order.Status}) [{order.CreationDate:dd.MM.yyyy}]");
-            }
+            RefreshOrdersList();
         }
 
         private void AddOrderButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(customerNameTextBox.Text) ||
-                string.IsNullOrWhiteSpace(descriptionTextBox.Text))
+            var customerName = customerNameTextBox.Text.Trim();
+            var description = descriptionTextBox.Text.Trim();
+            var creationDate = creationDatePicker.Value;
+
+            if (string.IsNullOrEmpty(customerName))
             {
-                MessageBox.Show("Заполните все поля!");
+                MessageBox.Show("Введите имя клиента", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            DateTime creationDate = creationDatePicker.Value;
-            Order newOrder = new Order(
-                customerNameTextBox.Text.Trim(),
-                descriptionTextBox.Text.Trim(),
-                creationDate
-            );
-            try
-            {
-                orderManager.AddOrder(newOrder);
-                customerNameTextBox.Clear();
-                descriptionTextBox.Clear();
-                UpdateOrdersList();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            var order = new Order(customerName, description, creationDate);
+            orderManager.AddOrder(order);
+            RefreshOrdersList();
         }
 
         private void RemoveOrderButton_Click(object sender, EventArgs e)
-{
-    if (ordersListBox.SelectedIndex == -1)
-    {
-        MessageBox.Show("Выберите заказ для удаления!");
-        return;
-    }
+        {
+            if (ordersListBox.SelectedIndex == -1)
+            {
+                MessageBox.Show("Выберите заказ", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-    var orderToRemove = orderManager.Orders[ordersListBox.SelectedIndex];
+            var selected = orderManager.Orders[ordersListBox.SelectedIndex];
+            orderManager.RemoveOrder(selected);
+            RefreshOrdersList();
+        }
 
-    try
-    {
-        orderManager.RemoveOrder(orderToRemove);
-        UpdateOrdersList();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show(ex.Message);
-    }
-}
+        private void UpdateStatusButton_Click(object sender, EventArgs e)
+        {
+            if (ordersListBox.SelectedIndex == -1)
+            {
+                MessageBox.Show("Выберите заказ", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-private void UpdateStatusButton_Click(object sender, EventArgs e)
-{
-    if (ordersListBox.SelectedIndex == -1)
-    {
-        MessageBox.Show("Выберите заказ для обновления статуса!");
-        return;
-    }
+            var selected = orderManager.Orders[ordersListBox.SelectedIndex];
+            var newStatus = (OrderStatus)statusComboBox.SelectedItem;
+            orderManager.UpdateOrderStatus(selected, newStatus);
+            RefreshOrdersList();
+        }
 
-    if (statusComboBox.SelectedItem == null)
-    {
-        MessageBox.Show("Выберите новый статус!");
-        return;
-    }
-
-    var orderToUpdate = orderManager.Orders[ordersListBox.SelectedIndex];
-    OrderStatus newStatus = (OrderStatus)statusComboBox.SelectedItem;
-
-    try
-    {
-        orderManager.UpdateOrderStatus(orderToUpdate, newStatus);
-        UpdateOrdersList();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show(ex.Message);
-    }
-}
+        internal void RefreshOrdersList()
+        {
+            ordersListBox.Items.Clear();
+            foreach (var order in orderManager.Orders)
+                ordersListBox.Items.Add(order.ToString());
+        }
     }
 }
