@@ -12,6 +12,8 @@ public class Form1Tests
     public void SetUp()
     {
         _form = new Form1();
+        _form.orderManager.Orders.Clear();
+        _form.Show();
     }
 
     [TestCleanup]

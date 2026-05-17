@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -21,7 +22,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LR1\LR1.csproj" />
+        <Compile Include="..\LR1\Order.cs" Link="Order.cs" />
+        <Compile Include="..\LR1\OrderStatus.cs" Link="OrderStatus.cs" />
+        <Compile Include="..\LR1\OrderManager.cs" Link="OrderManager.cs" />
+        <Compile Include="..\LR1\Form1.cs" Link="Form1.cs" />
+        <Compile Include="..\LR1\Form1.Designer.cs" Link="Form1.Designer.cs" />
     </ItemGroup>
 
 </Project>
