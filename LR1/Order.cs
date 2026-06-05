@@ -21,5 +21,10 @@ namespace LR1
         {
             Status = newStatus;
         }
+
+        public override string ToString()
+        {
+            return $"{CustomerName} — {Description} — {Status} — {CreationDate:dd.MM.yyyy}";
+        }
     }
 }
