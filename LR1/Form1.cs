@@ -6,6 +6,8 @@ namespace LR1
     public partial class Form1 : Form
     {
         internal OrderManager orderManager;
+        internal NotificationSettings notificationSettings;
+        internal OrderNotifier orderNotifier;
 
         internal TextBox customerNameTextBox;
         internal TextBox descriptionTextBox;
@@ -15,6 +17,8 @@ namespace LR1
         internal Button removeOrderButton;
         internal Button updateStatusButton;
         internal ListBox ordersListBox;
+        internal CheckBox notifyProcessingCheckBox;
+        internal CheckBox notifyCompletedCheckBox;
 
         public Form1()
         {
@@ -24,27 +28,13 @@ namespace LR1
             ClientSize = new System.Drawing.Size(800, 450);
             StartPosition = FormStartPosition.CenterScreen;
 
-            // Подписи полей (фикс TC-001: было непонятно, какое поле за что отвечает)
-            var customerNameLabel = new Label
-            {
-                Text = "Имя клиента",
-                Location = new System.Drawing.Point(10, 10),
-                Width = 150
-            };
-            var descriptionLabel = new Label
-            {
-                Text = "Описание",
-                Location = new System.Drawing.Point(170, 10),
-                Width = 200
-            };
-            var dateLabel = new Label
-            {
-                Text = "Дата создания",
-                Location = new System.Drawing.Point(380, 10),
-                Width = 190
-            };
+            notificationSettings = new NotificationSettings();
+            orderNotifier = new OrderNotifier(notificationSettings);
 
-            // Поля ввода под подписями
+            var customerNameLabel = new Label { Text = "Имя клиента", Location = new System.Drawing.Point(10, 10), Width = 150 };
+            var descriptionLabel = new Label { Text = "Описание", Location = new System.Drawing.Point(170, 10), Width = 200 };
+            var dateLabel = new Label { Text = "Дата создания", Location = new System.Drawing.Point(380, 10), Width = 190 };
+
             customerNameTextBox = new TextBox { Location = new System.Drawing.Point(10, 32), Width = 150 };
             descriptionTextBox = new TextBox { Location = new System.Drawing.Point(170, 32), Width = 200 };
             creationDatePicker = new DateTimePicker { Location = new System.Drawing.Point(380, 32), Width = 190 };
@@ -67,7 +57,28 @@ namespace LR1
             });
             statusComboBox.SelectedIndex = 0;
 
-            ordersListBox = new ListBox { Location = new System.Drawing.Point(10, 96), Width = 760, Height = 300 };
+            // Настройки уведомлений
+            notifyProcessingCheckBox = new CheckBox
+            {
+                Text = "Уведомлять: В обработке",
+                Location = new System.Drawing.Point(10, 96),
+                Width = 180,
+                Checked = notificationSettings.IsEnabled(OrderStatus.В_обработке)
+            };
+            notifyProcessingCheckBox.CheckedChanged += (s, e) =>
+                notificationSettings.SetEnabled(OrderStatus.В_обработке, notifyProcessingCheckBox.Checked);
+
+            notifyCompletedCheckBox = new CheckBox
+            {
+                Text = "Уведомлять: Завершён",
+                Location = new System.Drawing.Point(200, 96),
+                Width = 180,
+                Checked = notificationSettings.IsEnabled(OrderStatus.Завершён)
+            };
+            notifyCompletedCheckBox.CheckedChanged += (s, e) =>
+                notificationSettings.SetEnabled(OrderStatus.Завершён, notifyCompletedCheckBox.Checked);
+
+            ordersListBox = new ListBox { Location = new System.Drawing.Point(10, 124), Width = 760, Height = 280 };
 
             addOrderButton.Click += addOrderButton_Click;
             removeOrderButton.Click += removeOrderButton_Click;
@@ -83,6 +94,8 @@ namespace LR1
             Controls.Add(removeOrderButton);
             Controls.Add(updateStatusButton);
             Controls.Add(statusComboBox);
+            Controls.Add(notifyProcessingCheckBox);
+            Controls.Add(notifyCompletedCheckBox);
             Controls.Add(ordersListBox);
 
             orderManager = new OrderManager();
@@ -94,19 +107,16 @@ namespace LR1
             string customerName = customerNameTextBox.Text.Trim();
             string description = descriptionTextBox.Text;
 
-            // Фикс TC-002: пробелы ? после Trim строка пустая
             if (string.IsNullOrEmpty(customerName))
             {
                 MessageBox.Show("Введите имя клиента", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            // Фикс TC-006: символ-разделитель в имени
             if (customerName.Contains("|"))
             {
                 MessageBox.Show("Введите корректное имя клиента", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            // Фикс TC-007: символ-разделитель в описании
             if (description.Contains("|"))
             {
                 MessageBox.Show("Введите корректное описание", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -143,6 +153,15 @@ namespace LR1
             var order = orderManager.Orders[ordersListBox.SelectedIndex];
             var newStatus = (OrderStatus)statusComboBox.SelectedItem;
             orderManager.UpdateOrderStatus(order, newStatus);
+
+            // ЛР5: уведомление о статусе
+            string notification = orderNotifier.GetNotification(order, newStatus);
+            if (notification != null)
+            {
+                MessageBox.Show(notification, "Уведомление о статусе заказа",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
             RefreshOrdersList();
         }
 
