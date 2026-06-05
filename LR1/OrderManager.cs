@@ -59,5 +59,32 @@ namespace LR1
                 Orders.Add(order);
             }
         }
+
+
+
+
+        private readonly HashSet<OrderStatus> _notifyStatuses = new HashSet<OrderStatus>
+        {
+            OrderStatus.В_обработке,
+            OrderStatus.Завершён
+        };
+
+        public bool IsNotificationEnabled(OrderStatus status) => _notifyStatuses.Contains(status);
+
+        public void SetNotificationEnabled(OrderStatus status, bool enabled)
+        {
+            if (enabled) _notifyStatuses.Add(status);
+            else _notifyStatuses.Remove(status);
+        }
+
+        // Текст уведомления о переходе в статус, либо null — если уведомлять не нужно
+        public string GetStatusNotification(Order order, OrderStatus newStatus)
+        {
+            if (order == null) throw new ArgumentNullException(nameof(order));
+            if (newStatus != OrderStatus.В_обработке && newStatus != OrderStatus.Завершён) return null;
+            if (!_notifyStatuses.Contains(newStatus)) return null;
+            return $"Заказ «{order.CustomerName} — {order.Description}» перешёл в статус «{newStatus}».";
+        }
+
     }
 }

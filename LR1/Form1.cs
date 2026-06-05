@@ -6,8 +6,6 @@ namespace LR1
     public partial class Form1 : Form
     {
         internal OrderManager orderManager;
-        internal NotificationSettings notificationSettings;
-        internal OrderNotifier orderNotifier;
 
         internal TextBox customerNameTextBox;
         internal TextBox descriptionTextBox;
@@ -28,8 +26,8 @@ namespace LR1
             ClientSize = new System.Drawing.Size(800, 450);
             StartPosition = FormStartPosition.CenterScreen;
 
-            notificationSettings = new NotificationSettings();
-            orderNotifier = new OrderNotifier(notificationSettings);
+            // Менеджер создаём до чекбоксов — они читают его настройки уведомлений
+            orderManager = new OrderManager();
 
             var customerNameLabel = new Label { Text = "Имя клиента", Location = new System.Drawing.Point(10, 10), Width = 150 };
             var descriptionLabel = new Label { Text = "Описание", Location = new System.Drawing.Point(170, 10), Width = 200 };
@@ -57,26 +55,26 @@ namespace LR1
             });
             statusComboBox.SelectedIndex = 0;
 
-            // Настройки уведомлений
+            // Настройки уведомлений (ЛР5)
             notifyProcessingCheckBox = new CheckBox
             {
                 Text = "Уведомлять: В обработке",
                 Location = new System.Drawing.Point(10, 96),
                 Width = 180,
-                Checked = notificationSettings.IsEnabled(OrderStatus.В_обработке)
+                Checked = orderManager.IsNotificationEnabled(OrderStatus.В_обработке)
             };
             notifyProcessingCheckBox.CheckedChanged += (s, e) =>
-                notificationSettings.SetEnabled(OrderStatus.В_обработке, notifyProcessingCheckBox.Checked);
+                orderManager.SetNotificationEnabled(OrderStatus.В_обработке, notifyProcessingCheckBox.Checked);
 
             notifyCompletedCheckBox = new CheckBox
             {
                 Text = "Уведомлять: Завершён",
                 Location = new System.Drawing.Point(200, 96),
                 Width = 180,
-                Checked = notificationSettings.IsEnabled(OrderStatus.Завершён)
+                Checked = orderManager.IsNotificationEnabled(OrderStatus.Завершён)
             };
             notifyCompletedCheckBox.CheckedChanged += (s, e) =>
-                notificationSettings.SetEnabled(OrderStatus.Завершён, notifyCompletedCheckBox.Checked);
+                orderManager.SetNotificationEnabled(OrderStatus.Завершён, notifyCompletedCheckBox.Checked);
 
             ordersListBox = new ListBox { Location = new System.Drawing.Point(10, 124), Width = 760, Height = 280 };
 
@@ -98,7 +96,6 @@ namespace LR1
             Controls.Add(notifyCompletedCheckBox);
             Controls.Add(ordersListBox);
 
-            orderManager = new OrderManager();
             RefreshOrdersList();
         }
 
@@ -154,8 +151,8 @@ namespace LR1
             var newStatus = (OrderStatus)statusComboBox.SelectedItem;
             orderManager.UpdateOrderStatus(order, newStatus);
 
-            // ЛР5: уведомление о статусе
-            string notification = orderNotifier.GetNotification(order, newStatus);
+            // уведомление о статусе
+            string notification = orderManager.GetStatusNotification(order, newStatus);
             if (notification != null)
             {
                 MessageBox.Show(notification, "Уведомление о статусе заказа",

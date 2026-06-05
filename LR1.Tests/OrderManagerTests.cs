@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using LR1;
 
 namespace LR1.Tests
 {
@@ -70,11 +69,81 @@ namespace LR1.Tests
         {
             var manager = new OrderManager();
             manager.Orders.Clear();
-            manager.AddOrder(MakeOrder());      // AddOrder внутри вызывает приватный SaveOrders
+            manager.AddOrder(MakeOrder());  
 
-            var reloaded = new OrderManager();  // конструктор вызывает LoadOrders
+            var reloaded = new OrderManager();  
             Assert.AreEqual(1, reloaded.Orders.Count);
             Assert.AreEqual("Каримов", reloaded.Orders[0].CustomerName);
+        }
+
+
+
+
+        // добавил новые 9 тестов (5 работа
+
+        [TestMethod]
+        public void Notify_Processing_EnabledByDefault()
+        {
+            Assert.IsTrue(new OrderManager().IsNotificationEnabled(OrderStatus.В_обработке));
+        }
+
+        [TestMethod]
+        public void Notify_Completed_EnabledByDefault()
+        {
+            Assert.IsTrue(new OrderManager().IsNotificationEnabled(OrderStatus.Завершён));
+        }
+
+        [TestMethod]
+        public void Notify_New_DisabledByDefault()
+        {
+            Assert.IsFalse(new OrderManager().IsNotificationEnabled(OrderStatus.Новый));
+        }
+
+        [TestMethod]
+        public void SetNotificationEnabled_False_Disables()
+        {
+            var m = new OrderManager();
+            m.SetNotificationEnabled(OrderStatus.Завершён, false);
+            Assert.IsFalse(m.IsNotificationEnabled(OrderStatus.Завершён));
+        }
+
+        [TestMethod]
+        public void GetStatusNotification_Completed_ReturnsText()
+        {
+            var m = new OrderManager();
+            var order = MakeOrder();
+            Assert.IsFalse(string.IsNullOrEmpty(m.GetStatusNotification(order, OrderStatus.Завершён)));
+        }
+
+        [TestMethod]
+        public void GetStatusNotification_New_ReturnsNull()
+        {
+            var m = new OrderManager();
+            Assert.IsNull(m.GetStatusNotification(MakeOrder(), OrderStatus.Новый));
+        }
+
+        [TestMethod]
+        public void GetStatusNotification_Disabled_ReturnsNull()
+        {
+            var m = new OrderManager();
+            m.SetNotificationEnabled(OrderStatus.Завершён, false);
+            Assert.IsNull(m.GetStatusNotification(MakeOrder(), OrderStatus.Завершён));
+        }
+
+        [TestMethod]
+        public void GetStatusNotification_ContainsNameAndStatus()
+        {
+            var m = new OrderManager();
+            string msg = m.GetStatusNotification(MakeOrder(), OrderStatus.Завершён);
+            StringAssert.Contains(msg, "Каримов");
+            StringAssert.Contains(msg, "Завершён");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetStatusNotification_NullOrder_Throws()
+        {
+            new OrderManager().GetStatusNotification(null, OrderStatus.Завершён);
         }
     }
 }
